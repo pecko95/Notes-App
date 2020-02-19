@@ -2,7 +2,7 @@
   "name": "notes-app-backend",
   "version": "1.0.0",
   "description": "Backend for the notes app",
-  "main": "index.js",
+  "main": "build/index.js",
   "scripts": {
     "start": "npm run build:watch",
     "build": "tsc -p .",

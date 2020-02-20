@@ -1,27 +1,25 @@
-// Configure express
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
-import apiRoutes from "../api";
+import routes from "../api";
 
-const expressApplication = ({ app }: { app: express.Application }) => {
-  // Health checks
+const expressApp = async({ app }) => {
+  // Checks for health status
   app.get("/status", (req, res) => {
     res.status(200).end();
   });
-
   app.head("/status", (req, res) => {
     res.status(200).end();
-  })
+  });
 
-  // Transform strings into JSON
+  // Transform strings from requests to JSON
   app.use(bodyParser.json());
 
   // Allow CORS
   app.use(cors());
 
-  // Load the API routes
-  app.use("/api", apiRoutes())
-}
+  // API routes
+  app.use("/api", routes());
+};
 
-export default expressApplication;
+export default expressApp;

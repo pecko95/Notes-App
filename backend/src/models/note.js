@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 // Notes model schema
 const NotesSchema = mongoose.Schema({
+  id: String,
   title: String,
   body: String,
   date: Date | String,
@@ -13,9 +14,6 @@ const NotesSchema = mongoose.Schema({
 // Dont return unused fields
 NotesSchema.set("toJSON", {
   transform: (document, returnedObject) => {
-    // Transform the ID into a string
-    returnedObject.id = returnedObject._id.toString();
-
     delete returnedObject._id;
     delete returnedObject.__v;
   }

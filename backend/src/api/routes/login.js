@@ -25,7 +25,8 @@ const loginRoute = app => {
 
         } else {
           // Get data for specific user
-          res.redirect(`/api/users/${username}`);
+          // res.redirect(`/api/users/id/${username}`);
+          res.json(user.toJSON());
         }
       })
     }

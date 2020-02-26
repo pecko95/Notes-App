@@ -20,6 +20,10 @@ const UserSchema = mongoose.Schema({
   password: {
     type: String,
     required: true
+  },
+  notesCollectionID: {
+    type: String,
+    unique: true
   }
 })
 
@@ -40,6 +44,10 @@ UserSchema.set("toJSON", {
 UserSchema.pre("save", function(next) {
   const user = this;
 
+  // Set the ID of the created user to be the ID of the notes collection
+  user.notesCollectionID = user._id;
+
+  // Encrypt the password
   bcrypt.hash(user.password, 10, (err, hash) => {
     if (err) {
       return next(err);

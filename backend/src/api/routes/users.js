@@ -16,31 +16,68 @@ const userRoutes = app => {
   })
 
   // Get specific user
-  route.get("/:username", (req, res) => {
-    const username = req.params.username;
+  route.get("/id/:id?", (req, res, next) => {
+    const id = req.params.id;
 
-    // Query the DB for the unique username and check if it exists
-    User.findOne({ username })
-      .then(user => {
-        if (user) {
-          res.json(user.toJSON());
+    // Check if id was passed as parameter
+    if (!id) {
+      res.status(404).json({
+        error: "User not found!"
+      })
+    } else {
+      // Query the DB for the unique username and check if it exists
+      User.findOne({ _id: id })
+        .then(user => {
+          if (user) {
+            res.json(user.toJSON());
+          } else {
+            res.status(404).json({
+              error: "User not found!"
+            })
+          }
+        })
+        .catch(err => console.log("Error", err.message))
+    }
+
+  })
+
+  // Search for users - firstname, lastname and/or username
+  route.get("/search/:searchParam?", (req, res) => {
+    const searchParam = req.params.searchParam;
+    
+    // Check if a search parameter was passed
+    if (typeof searchParam != "undefined") {
+      // Use multiple find conditions to query the DB
+      User.find({
+        $or: [
+          {
+            first_name: { $regex: searchParam, $options: "$i" }
+          },
+          {
+            last_name:  { $regex: searchParam, $options: "$i" }
+          },
+          {
+            username:   { $regex: searchParam, $options: "$i" }
+          }
+        ]
+      }).then(users => {
+        if (users) {
+          res.json(users.map(user => user.toJSON()))
         } else {
-          res.status(404).json({
-            error: "User not found!"
+          res.status(400).json({
+            error: "User not found!zxc"
           })
         }
-      })
-      .catch(err => console.log("Error", err.message))
+      }).catch(err => console.log("Error", err))
+    } else {
+      // Find all users
+      User.find({})
+        .then(users => res.json(users.map(user => user.toJSON())))
+        .catch(err => console.log("Error", err))
+    }
+
   })
 
-  // Search user by username ONLY - for now
-  route.get("/search/:username", (req, res) => {
-    const username = req.params.username;
-
-    User.find({ username }).then(users => {
-      res.json(users.map(user => user.toJSON()))
-    })
-  })
 }
 
 export default userRoutes;

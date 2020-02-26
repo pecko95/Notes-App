@@ -1,5 +1,6 @@
 import { Router } from "express";
 import Note from "../../models/note";
+import User from "../../models/user";
 
 const route = Router();
 
@@ -39,33 +40,46 @@ const NotesRoute = app  => {
   })
 
   // Create a new note
-  route.post("/", (req, res) => {
+  route.post("/:username?", (req, res, next) => {
     const { title, body, important } = req.body;
+    const username = req.params.username;
 
     if (!title || !body) {
       res.status(400).json({
         error: "Please fill all required fields!"
       });
     } else {
-      const noteData = {
-        title,
-        body,
-        important: important ? important : false,
-        date: new Date(),
-        createdBy: "",
-        completed: false
-      }
+      // ID for the user the notes belong to
+      User.findOne({ username }, { notesCollectionID: 1 })
+        .then(user => {
+          if (user) {
 
-      // Create a new note and save it to database
-      Note.create(noteData, (err, note) => {
-        if (err) {
-          return next(err);
-        } else {
-          res.status(201).json({
-            "success": "Note created successfully!"
-          })
-        }
-      });
+            const noteData = {
+              id: user.notesCollectionID,
+              title,
+              body,
+              important,
+              date: new Date(),
+              createdBy: username,
+              completed: false
+            };
+
+            Note.create(noteData, (err, note) => {
+              if (err) {
+                return next(err);
+              } else {
+                res.status(200).json({
+                  "success": "Note created successfully!"
+                })
+              }
+            })
+          } else {
+            res.status(404).json({
+              error: "Doesnt exist"
+            })
+          }
+        })
+        .catch(err => console.log("Error", err))
     }
 
   })

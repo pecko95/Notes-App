@@ -11,14 +11,9 @@ const loginRoute = app => {
     const { username, password } = req.body;
 
     if (!username || !password) {
-      const error = new Error("Please enter username and/or password!");
-      error.status = 403;
-
       res.status(403).json({
-        error: "Please enter username and/or password!"
-      })
-
-      // return next(error);
+        error: "Please enter username and/or password."
+      });
     } else {
       // Check if the user exists and is authenticated
       User.authenticate(username, password, (err, user) => {

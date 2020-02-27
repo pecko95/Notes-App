@@ -3,7 +3,7 @@ import env from "../config/index";
 
 function validateJWT(req, res, next) {
   const authorizationHeader = req.headers.authorization;
-  let result = "" || {};
+  let result = {};
 
   // Check if authorization exists
   if (authorizationHeader) {
@@ -36,7 +36,7 @@ function validateJWT(req, res, next) {
   } else {
     // Authorization fails if there is no authorization header passed.
     result.status = 401;
-    result.error  = "Authentication failed. Please provide matching username and password!";
+    result.error  = "Authentication failed. Invalid token credentials.";
  
     res.status(401).send(result);
   }

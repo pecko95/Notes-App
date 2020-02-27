@@ -9,9 +9,9 @@ const signupRoute = app => {
   // Create new user
   route.post("/", (req, res, next) => {
     // Get required field values
-    const { username, first_name, last_name, password } = req.body;
+    const { username, first_name, last_name, password, role } = req.body;
 
-    if (!username || !first_name || !last_name || !password) {
+    if (!username || !first_name || !last_name || !password || !role) {
       res.status(400).json({
         error: "Please enter all required fields!"
       })
@@ -21,7 +21,8 @@ const signupRoute = app => {
         username,
         first_name,
         last_name,
-        password
+        password,
+        role
       };
 
       // Create a new User document with provided data

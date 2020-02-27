@@ -1,30 +1,43 @@
 import { Router } from "express";
 import Note from "../../models/note";
 import User from "../../models/user";
+import validateJWT from "../../utils/jwtHandling";
 
 const route = Router();
 
 const NotesRoute = app  => {
   app.use("/notes", route);
+  let result = {};
+  let status = 200;
 
   // Get all notes
-  route.get("/", (req, res) => {
-    Note.find({})
-      .then(notes => {
-        if (notes.length > 0) {
-          res.json(notes.map(note => note.toJSON()));
-        } else {
-          res.status(404).json({
-            "error": "No notes found."
-          })
-        }
+  route.get("/", validateJWT, (req, res) => {
+    // Get ALL notes regardless of users
+    const payload = req.decoded;
+    if (payload && payload.user.role === "Admin") {
+      Note.find({})
+        .then(notes => {
+          if (notes.length > 0) {
+            res.json(notes.map(note => note.toJSON()));
+          } else {
+            res.status(404).json({
+              "error": "No notes found."
+            })
+          }
+  
+        })
+        .catch(err => console.log("Error", err));
+    } else {
+      status = 401;
+      result.status = status;
+      result.error  = "Access denied. Invalid token credentials.";
 
-      })
-      .catch(err => console.log("Error", err));
+      res.status(status).send(result);
+    }
   })
 
   // Get specific note by ID
-  route.get("/id/:id?", (req, res) => {
+  route.get("/id/:id?", validateJWT, (req, res) => {
     const id = req.params.id;
 
     if (id) {
@@ -40,9 +53,12 @@ const NotesRoute = app  => {
   })
 
   // Create a new note
-  route.post("/:username?", (req, res, next) => {
+  route.post("/", validateJWT, (req, res, next) => {
     const { title, body, important } = req.body;
-    const username = req.params.username;
+
+    // Use the recieved payload username property contained in the JWT
+    // to find the specific user and create the new note with his ID
+    const username = req.decoded.user.username;
 
     if (!title || !body) {
       res.status(400).json({
@@ -80,6 +96,33 @@ const NotesRoute = app  => {
           }
         })
         .catch(err => console.log("Error", err))
+    }
+  });
+
+  // Get all notes that belong to a specific user
+  route.get("/my", validateJWT, (req, res) => {
+    const userID = req.decoded.user.id;
+
+    if (userID) {
+      Note.find({ id: userID })
+        .then(notes => {
+          // If notes exist
+          if (notes && notes.length > 0) {
+            res.json(notes.map(note => note.toJSON()));
+          } else {
+            status = 404;
+            result.status = status;
+            result.error  = "No notes found for this user.";
+            res.status(status).send(result);
+          }
+        })
+        .catch(err => console.log("ERROR", err))
+    } else {
+      status = 401;
+      result.status = status;
+      result.error = "Access denied. Invalid token credentials.";
+
+      res.status(status).send(result);
     }
 
   })

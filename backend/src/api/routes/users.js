@@ -103,7 +103,7 @@ const userRoutes = app => {
   })
 
   // Get all notes that belong to a specific user
-  route.get("/:id?/notes", (req, res, next) => {
+  route.get("/:id?/notes", validateJWT, (req, res, next) => {
     const id = req.params.id;
 
     if (typeof id !== "undefined") {

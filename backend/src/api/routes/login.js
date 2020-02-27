@@ -35,7 +35,7 @@ const loginRoute = app => {
           status = 200;
 
           // Create the JWT
-          const payload = { username };
+          const payload = { user };
 
           // Options - exipiry date, issued by etc.
           const options = { expiresIn: "1h", issuer: "http://localhost:testing"};

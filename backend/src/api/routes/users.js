@@ -37,9 +37,11 @@ const userRoutes = app => {
     if (payload && payload.user.role === "Admin") {
       // Check if id was passed as parameter
       if (!id) {
-        res.status(404).json({
-          error: "User not found!"
-        })
+        status = 404;
+        result.status = status;
+        result.error  = "User not found!";
+
+        res.status(status).send(result);
       } else {
         // Query the DB for the unique username and check if it exists
         User.findOne({ _id: id })
@@ -47,9 +49,11 @@ const userRoutes = app => {
             if (user) {
               res.json(user.toJSON());
             } else {
-              res.status(404).json({
-                error: "User not found!"
-              })
+              status = 404;
+              result.status = status;
+              result.error  = "User not found!";
+
+              res.status(status).send(result);
             }
           })
           .catch(err => console.log("ERROR: ", err.message))
@@ -88,9 +92,11 @@ const userRoutes = app => {
         if (users) {
           res.json(users.map(user => user.toJSON()))
         } else {
-          res.status(400).json({
-            error: "User not found!zxc"
-          })
+          status = 404;
+          result.status = status;
+          result.error  = "User not found!";
+
+          res.status(status).send(result);
         }
       }).catch(err => console.log("ERROR: ", err))
     } else {
@@ -113,9 +119,11 @@ const userRoutes = app => {
           if (notes) {
             res.json(notes.map(note => note.toJSON()))
           } else {
-            res.status(404).json({
-              error: "No notes found!"
-            })
+            status = 404;
+            result.status = status;
+            result.error  = "User has no notes!";
+    
+            res.status(status).send(result);
           }
         })
         .catch(err => console.log("ERROR: ", err))

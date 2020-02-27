@@ -20,9 +20,11 @@ const NotesRoute = app  => {
           if (notes.length > 0) {
             res.json(notes.map(note => note.toJSON()));
           } else {
-            res.status(404).json({
-              "error": "No notes found."
-            })
+            status = 404;
+            result.status = status;
+            result.error = "No notes found!"
+            
+            res.status(status).send(result);
           }
   
         })
@@ -46,9 +48,11 @@ const NotesRoute = app  => {
         .catch(err => console.log("Error", err));
 
     } else {
-      res.status(404).json({
-        error: "Page does not exist!"
-      });
+      status = 404;
+      result.status = status;
+      result.error = "Note doesn't exist!"
+
+      res.status(status).send(result);
     }
   })
 
@@ -61,9 +65,11 @@ const NotesRoute = app  => {
     const username = req.decoded.user.username;
 
     if (!title || !body) {
-      res.status(400).json({
-        error: "Please fill all required fields!"
-      });
+      status = 400;
+      result.status = status;
+      result.error  = "Please fill all required fields!";
+
+      res.status(status).send(result);
     } else {
       // ID for the user the notes belong to
       User.findOne({ username }, { notesCollectionID: 1 })
@@ -84,15 +90,19 @@ const NotesRoute = app  => {
               if (err) {
                 return next(err);
               } else {
-                res.status(200).json({
-                  "success": "Note created successfully!"
-                })
+                status = 200;
+                result.status = status;
+                result.error  = "Note created successfully!";
+
+                res.status(status).send(result);
               }
             })
           } else {
-            res.status(404).json({
-              error: "Doesnt exist"
-            })
+            status = 404;
+            result.status = status;
+            result.error  = "User doesn't exist!";
+
+            res.status(status).send(result);
           }
         })
         .catch(err => console.log("Error", err))

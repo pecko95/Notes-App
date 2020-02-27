@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import User from "../../models/user";
 import Note from "../../models/note";
+import validateJWT from "../../utils/jwtHandling";
 
 // Initialize the router
 const route = Router();
@@ -10,7 +11,7 @@ const userRoutes = app => {
   app.use("/users", route);
 
   // Get all users
-  route.get("/", (req, res) => {
+  route.get("/", validateJWT, (req, res) => {
     User.find({}).then(users => {
       res.json(users.map(user => user.toJSON()));
     })

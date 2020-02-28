@@ -211,6 +211,53 @@ const userRoutes = app => {
 
   })
 
+
+  // Delete users
+  route.delete("/:id/delete", validateJWT, (req, res) => {
+    const id = req.params.id;
+    const payload = req.decoded;
+
+    // Clear result object and reset status on each request
+    status = 200;
+    result = {};
+
+    // Admin can delete all user accounts. Other roles can delete only their own account
+    if (payload && payload.user.role === "Admin" || payload && payload.user.id === id) {
+      if (!id) {
+        status = 400;
+        result.status = status;
+        result.error = "Provide user ID.";
+
+        res.status(status).send(result);
+      } else {
+        // Find and delete a specific user
+        User.findOneAndDelete({ _id: id }, (err, deletedUser) => {
+          if (err) {
+            status = 500;
+            result.status = status;
+            result.error = "Something went wrong, can't delete user.";
+          } else if (!deletedUser) {
+            status = 404;
+            result.status = status;
+            result.error = "User does not exist.";
+          } else {
+            status = 200;
+            result.status = status;
+            result.message = "User deleted successfully."
+          }
+
+          res.status(status).send(result);
+        })
+      }
+    } else {
+      status = 401;
+      result.status = status;
+      result.error = "Not authorized.";
+
+      res.status(status).send(result);
+    }
+    
+  })
 }
 
 export default userRoutes;

@@ -41,38 +41,29 @@ const userRoutes = app => {
     status = 200;
     result = {};
 
-    if (payload && payload.user.role === "Admin") {
-      // Check if id was passed as parameter
-      if (!id) {
-        status = 404;
-        result.status = status;
-        result.error  = "User not found!";
-
-        res.status(status).send(result);
-      } else {
-        // Query the DB for the unique username and check if it exists
-        User.findOne({ _id: id })
-          .then(user => {
-            if (user) {
-              res.json(user.toJSON());
-            } else {
-              status = 404;
-              result.status = status;
-              result.error  = "User not found!";
-
-              res.status(status).send(result);
-            }
-          })
-          .catch(err => console.log("ERROR: ", err.message))
-      }
-    } else {
-      status = 401;
+    // Check if id was passed as parameter
+    if (!id) {
+      status = 404;
       result.status = status;
-      result.error = "Access Denied. Invalid token credentials.";
+      result.error  = "User not found!";
 
       res.status(status).send(result);
-    }
+    } else {
+      // Query the DB for the unique username and check if it exists
+      User.findOne({ _id: id })
+        .then(user => {
+          if (user) {
+            res.json(user.toJSON());
+          } else {
+            status = 404;
+            result.status = status;
+            result.error  = "User not found!";
 
+            res.status(status).send(result);
+          }
+        })
+        .catch(err => console.log("ERROR: ", err.message))
+    }
 
   })
 

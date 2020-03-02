@@ -18,7 +18,7 @@ function _startServer() {
   _startServer = _asyncToGenerator(
   /*#__PURE__*/
   regeneratorRuntime.mark(function _callee() {
-    var app;
+    var app, PORT;
     return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
@@ -31,7 +31,8 @@ function _startServer() {
             });
 
           case 3:
-            app.listen(_index["default"].PORT, function (err) {
+            PORT = process.env.PORT || 3000;
+            app.listen(PORT, function (err) {
               if (err) {
                 console.log("Something went wrong: ".concat(err.message));
                 process.exit(1);
@@ -40,7 +41,7 @@ function _startServer() {
               }
             });
 
-          case 4:
+          case 5:
           case "end":
             return _context.stop();
         }

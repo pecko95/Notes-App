@@ -39,13 +39,27 @@ const NotesRoute = app  => {
   })
 
   // Get specific note by ID
-  route.get("/id/:id?", validateJWT, (req, res) => {
+  route.get("/:id/details", validateJWT, (req, res) => {
     const id = req.params.id;
 
     if (id) {
-      Note.find({ id })
-        .then(note => res.json(note.toJSON()))
-        .catch(err => console.log("Error", err));
+      Note.findOne({ id }, (err, note) => {
+        if (err) {
+          status = 400;
+          result.status = status;
+          result.error = `Something went wrong: ${err}`;
+
+          res.status(status).send(result);
+        } else if (!note) {
+          status = 404;
+          result.status = status;
+          result.error = "Note does not exist!";
+
+          res.status(status).send(result);
+        } else {
+          res.status(200).json(note.toJSON());
+        }
+      });
 
     } else {
       status = 404;
@@ -210,7 +224,7 @@ const NotesRoute = app  => {
   })
 
   // Delete a specific note
-  route.delete("/id/:id/delete", validateJWT, (req, res) => {
+  route.delete("/:id/delete", validateJWT, (req, res) => {
     const id = req.params.id;
     const payload = req.decoded;
 
@@ -236,19 +250,24 @@ const NotesRoute = app  => {
                 status = 400;
                 result.status = status;
                 result.error = "Something went wrong";
+
+                res.status(status).send(result);
               } else if (!note) {
                 status = 404;
                 result.status = status;
                 result.error = "Note does not exist!";
+
+                res.status(status).send(result);
               } else {
                 status = 200;
                 result.status = status;
                 result.message = "Successfully deleted note!";
+
+                res.status(status).send(result);
               }
             })
           }
           
-          res.status(status).send(result);
         }
       })
     } else {

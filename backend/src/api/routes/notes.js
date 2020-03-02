@@ -1,4 +1,4 @@
-import e, { Router } from "express";
+import { Router } from "express";
 import Note from "../../models/note";
 import User from "../../models/user";
 import validateJWT from "../../utils/jwtHandling";

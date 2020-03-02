@@ -1,9 +1,9 @@
-import { Router } from "express";
+import e, { Router } from "express";
 import Note from "../../models/note";
 import User from "../../models/user";
 import validateJWT from "../../utils/jwtHandling";
 
-const route = Router();
+const route = Router({ mergeParams: true });
 
 const NotesRoute = app  => {
   app.use("/notes", route);
@@ -175,7 +175,7 @@ const NotesRoute = app  => {
                 title,
                 body,
                 important,
-                
+
                 // If completed parameter is recieved upon request, update the value. If no, do nothing
                 ...completed && { completed }
               }
@@ -210,40 +210,104 @@ const NotesRoute = app  => {
   })
 
   // Delete a specific note
-  route.delete("/:id", validateJWT, (req, res) => {
+  route.delete("/id/:id/delete", validateJWT, (req, res) => {
     const id = req.params.id;
     const payload = req.decoded;
 
-    User.findOne({ _id: payload.user.id }, (err, user) => {
-      if (err) {
-        status = 400;
-        result.status = status;
-        result.error = "Bad request!";
-      } else if (!user) {
-        status = 404;
-        result.status = status;
-        result.error = "User not found!";
-      } else {
-        // If the user exists, find the note belonging to that user
-        if (payload && payload.user.role === "Admin" || payload && payload.user.id === user.id) {
-          Note.findOneAndRemove({ id }, (err, result) => {
-            if (err) {
-              status = 400;
-              result.status = status;
-              result.error = "Something went wrong"
-            } else {
-              status = 200;
-              result.status = status;
-              result.message = "Successfully deleted note!"
-            }
-          })
+    if (id) {
+      User.findOne({ _id: payload.user.id }, (err, user) => {
+        if (err) {
+          status = 400;
+          result.status = status;
+          result.error = "Bad request!";
+
+          res.status(status).send(result);
+        } else if (!user) {
+          status = 404;
+          result.status = status;
+          result.error = "User not found!";
+
+          res.status(status).send(result);
+        } else {
+          // If the user exists, find the note belonging to that user
+          if (payload && payload.user.role === "Admin" || payload && payload.user.id === user.id) {
+            Note.findOneAndRemove({ id }, (err, note) => {
+              if (err) {
+                status = 400;
+                result.status = status;
+                result.error = "Something went wrong";
+              } else if (!note) {
+                status = 404;
+                result.status = status;
+                result.error = "Note does not exist!";
+              } else {
+                status = 200;
+                result.status = status;
+                result.message = "Successfully deleted note!";
+              }
+            })
+          }
+          
+          res.status(status).send(result);
         }
-        
-        res.status(status).send(result);
-      }
+      })
+    } else {
+      status = 400;
+      result.status = status;
+      result.error = "Bad request";
 
       res.status(status).send(result);
-    })
+    }
+  })
+
+  // Delete ALL notes
+  route.delete("/all", validateJWT, (req, res) => {
+    const payload = req.decoded;
+    status = 200;
+    result = {};
+
+    if (payload && payload.user.role === "Admin") {
+      try {
+        // Check if there are any notes
+        Note.find({}, async(err, notes) => {
+          if (err) {
+            status = 400;
+            result.status = status;
+            result.error = `Something went wrong: ${err}`;
+          } else if (!notes || notes.length < 1) {
+            status = 404;
+            result.status = status;
+            result.error = "No notes found!";
+          } else {
+            // Check if the user is an ADMIN to allow deleting all notes
+            const deletedAllNotes = await Note.deleteMany({}, { w: 'majority', wtimeout: 250 });
+    
+            if (deletedAllNotes.ok === 1) {
+              status = 200;
+              result.status = status;
+              result.message = "Successfully deleted all notes!";
+            } else {
+              status = 400;
+              result.status = status;
+              result.error = "Could not delete all notes!";
+            }
+          }
+
+          // Send the response back
+          res.status(status).send(result);
+        })
+      } catch(err) {
+        status = 500;
+        result.status = status;
+        result.error = `Something went wrong! ${err}`;
+      }
+    } else {
+      status = 401;
+      result.status = status;
+      result.error = "Not authorized";
+
+      res.status(status).send(result);
+    }
   })
 }
 

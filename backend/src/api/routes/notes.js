@@ -39,7 +39,7 @@ const NotesRoute = app  => {
   })
 
   // Get specific note by ID
-  route.get("/:id?", validateJWT, (req, res) => {
+  route.get("/id/:id?", validateJWT, (req, res) => {
     const id = req.params.id;
 
     if (id) {
@@ -142,12 +142,14 @@ const NotesRoute = app  => {
     const id = req.params.id;
     const payload = req.decoded;
     const { title, body, important, completed } = req.body;
+    status = 200;
+    result = {};
 
     // Check if required fields are passed to the request
-    if (!title || !body || !important || !completed) {
+    if (!title || !body || !important) {
       status = 400;
       result.status = status;
-      result.error = "Please fill all required fields.";
+      result.error = "Please fill all required fieldsss.";
 
       res.status(status).send(result);
     } else {
@@ -155,14 +157,16 @@ const NotesRoute = app  => {
         if (err) {
           status = 400;
           result.status = status;
-          result.error = "Something went wrong"
+          result.error = "Something went wrong";
+          
+          res.status(status).send(result);
         } else if (!user) {
           status = 404;
           result.status = status;
           result.error = "User does not exist";
+          
+          res.status(status).send(result);
         } else {
-          res.json(user.toJSON())
-
           // Check if user is admin or if the note belongs to the logged in user
           if (payload && payload.user.role === "Admin" || payload && payload.user.id === user.id) {
             // Find and update a specific note
@@ -171,7 +175,9 @@ const NotesRoute = app  => {
                 title,
                 body,
                 important,
-                completed
+                
+                // If completed parameter is recieved upon request, update the value. If no, do nothing
+                ...completed && { completed }
               }
             }, (err, updatedNote) => {
               if (err) {
@@ -187,19 +193,57 @@ const NotesRoute = app  => {
                 result.status = status;
                 result.message = "Successfully updated note!";
               }
-            })
 
+              res.status(status).send(result);
+            })
           } else {
             status = 401;
             result.status = status;
             result.error = "Not authorized.";
+
+            res.status(status).send(result);
           }
         }
-
-        res.status(status).send(result);
       })
     }
 
+  })
+
+  // Delete a specific note
+  route.delete("/:id", validateJWT, (req, res) => {
+    const id = req.params.id;
+    const payload = req.decoded;
+
+    User.findOne({ _id: payload.user.id }, (err, user) => {
+      if (err) {
+        status = 400;
+        result.status = status;
+        result.error = "Bad request!";
+      } else if (!user) {
+        status = 404;
+        result.status = status;
+        result.error = "User not found!";
+      } else {
+        // If the user exists, find the note belonging to that user
+        if (payload && payload.user.role === "Admin" || payload && payload.user.id === user.id) {
+          Note.findOneAndRemove({ id }, (err, result) => {
+            if (err) {
+              status = 400;
+              result.status = status;
+              result.error = "Something went wrong"
+            } else {
+              status = 200;
+              result.status = status;
+              result.message = "Successfully deleted note!"
+            }
+          })
+        }
+        
+        res.status(status).send(result);
+      }
+
+      res.status(status).send(result);
+    })
   })
 }
 

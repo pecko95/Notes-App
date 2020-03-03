@@ -2,6 +2,7 @@ import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 import routes from "../api";
+import cookieParser from "cookie-parser";
 
 const expressApp = async({ app }) => {
   // Checks for health status
@@ -14,6 +15,8 @@ const expressApp = async({ app }) => {
 
   // Transform strings from requests to JSON
   app.use(bodyParser.json());
+
+  app.use(cookieParser());
 
   // Allow CORS
   app.use(cors());

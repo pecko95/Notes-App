@@ -7,7 +7,7 @@ async function startServer() {
   // Wait for loaders to start running
   await require("./loaders").default({ expressApp: app })
 
-  const PORT = env.PORT || 3000;
+  const PORT = process.env.PORT || env.PORT || 3000;
 
   app.listen(PORT, err => {
     if (err) {

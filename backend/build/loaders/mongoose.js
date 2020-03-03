@@ -32,7 +32,7 @@ function () {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
-            URI = process.env.MONGODB_URI || _index.default.MONGODB_URI;
+            URI = _index.default.MONGODB_URI;
             _context.next = 3;
             return _mongoose.default.connect(URI, {
               useNewUrlParser: true,

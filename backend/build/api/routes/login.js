@@ -53,7 +53,7 @@ var loginRoute = function loginRoute(app) {
 
           var options = {
             expiresIn: "1h",
-            issuer: "http://localhost:testing"
+            issuer: "http://notes-app:heroku"
           }; // JWT Secret from ENV
 
           var secret = _index.default.JWT_SECRET; // Sign the token

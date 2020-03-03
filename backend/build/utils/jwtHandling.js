@@ -26,7 +26,7 @@ function validateJWT(req, res, next) {
 
     var options = {
       expiresIn: "1h",
-      issuer: "http://localhost:testing"
+      issuer: "http://notes-app:heroku"
     };
 
     try {

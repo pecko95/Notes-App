@@ -47,7 +47,9 @@ function () {
 
             app.use(_bodyParser.default.json()); // Allow CORS
 
-            app.use((0, _cors.default)()); // API routes
+            app.use((0, _cors.default)({
+              origin: 'http://localhost:3000'
+            })); // API routes
 
             app.use("/api", (0, _api.default)());
 

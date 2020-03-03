@@ -16,7 +16,9 @@ const expressApp = async({ app }) => {
   app.use(bodyParser.json());
 
   // Allow CORS
-  app.use(cors());
+  app.use(cors({
+    origin: 'http://localhost:3000'
+  }));
 
   // API routes
   app.use("/api", routes());

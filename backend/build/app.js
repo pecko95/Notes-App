@@ -37,7 +37,7 @@ function _startServer() {
             });
 
           case 3:
-            PORT = process.env.PORT || _index.default.PORT || 3000;
+            PORT = _index.default.PORT || 3000;
             app.listen(PORT, function (err) {
               if (err) {
                 console.log("Something went wrong: ".concat(err.message));

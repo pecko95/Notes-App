@@ -1,0 +1,1 @@
+web: node backend/build/app.js

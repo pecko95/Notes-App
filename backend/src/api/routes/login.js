@@ -38,7 +38,7 @@ const loginRoute = app => {
           const payload = { user };
 
           // Options - exipiry date, issued by etc.
-          const options = { expiresIn: "1h", issuer: "http://localhost:testing"};
+          const options = { expiresIn: "1h", issuer: "http://notes-app:heroku"};
           
           // JWT Secret from ENV
           const secret = env.JWT_SECRET;

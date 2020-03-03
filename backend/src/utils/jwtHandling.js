@@ -13,7 +13,7 @@ function validateJWT(req, res, next) {
     // Options to verify the reiceved token with - must match the options we provide
     const options = {
       expiresIn: "1h", 
-      issuer: "http://localhost:testing"
+      issuer: "http://notes-app:heroku"
     }
 
     try {

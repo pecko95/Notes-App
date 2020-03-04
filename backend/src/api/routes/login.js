@@ -38,19 +38,7 @@ const loginRoute = app => {
           // Create the JWT
           await generateJWT(res, user);
           console.log("GENERATED COOKIE");
-          // const payload = { user };
 
-          // // Options - exipiry date, issued by etc.
-          // const options = { expiresIn: "1h", issuer: "http://notes-app:heroku"};
-          
-          // // JWT Secret from ENV
-          // const secret = env.JWT_SECRET;
-
-          // // Sign the token
-          // const token = jwt.sign(payload, secret, options);
-
-          // Return the token details as a response
-          // result.token = token;
           result.status = status;
           result.result = user;
         }

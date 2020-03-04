@@ -16,10 +16,13 @@ const expressApp = async({ app }) => {
   // Transform strings from requests to JSON
   app.use(bodyParser.json());
 
-  app.use(cookieParser());
-
   // Allow CORS
-  app.use(cors());
+  app.use(cors({
+    origin: "http://localhost:3000",
+    credentials: true
+  }));
+
+  app.use(cookieParser());
 
   // API routes
   app.use("/api", routes());

@@ -2,6 +2,7 @@ import { Router } from "express";
 import User from "../../models/user";
 import jwt from "jsonwebtoken";
 import env from "../../config/index";
+import generateJWT from "../../utils/generateJWT";
 
 const route = Router();
 
@@ -21,7 +22,7 @@ const loginRoute = app => {
       res.status(status).send(result);
     } else {
       // Check if the user exists and is authenticated
-      User.authenticate(username, password, (err, user) => {
+      User.authenticate(username, password, async(err, user) => {
         if(err) {
           status = 500;
           result.status = status;
@@ -35,19 +36,9 @@ const loginRoute = app => {
           status = 200;
 
           // Create the JWT
-          const payload = { user };
+          await generateJWT(res, user);
+          console.log("GENERATED COOKIE");
 
-          // Options - exipiry date, issued by etc.
-          const options = { expiresIn: "1h", issuer: "http://notes-app:heroku"};
-          
-          // JWT Secret from ENV
-          const secret = env.JWT_SECRET;
-
-          // Sign the token
-          const token = jwt.sign(payload, secret, options);
-
-          // Return the token details as a response
-          result.token = token;
           result.status = status;
           result.result = user;
         }

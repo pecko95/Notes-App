@@ -2,6 +2,7 @@ import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 import routes from "../api";
+import cookieParser from "cookie-parser";
 
 const expressApp = async({ app }) => {
   // Checks for health status
@@ -16,7 +17,12 @@ const expressApp = async({ app }) => {
   app.use(bodyParser.json());
 
   // Allow CORS
-  app.use(cors());
+  app.use(cors({
+    origin: "http://localhost:3000",
+    credentials: true
+  }));
+
+  app.use(cookieParser());
 
   // API routes
   app.use("/api", routes());

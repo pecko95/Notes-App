@@ -1,32 +1,36 @@
 import jwt from "jsonwebtoken";
 import env from "../config/index";
 
-const validateJWT = async(req, res, next) => {
-  // Check if token exists in the request
-  const token = req.cookies.jwt || '';
+export const validateJWT = async(req, res, next) => {
+  // Check if token exists in request header
+  const authorizationHeader = req.headers['authorization'];
+  const token = authorizationHeader && authorizationHeader.split(" ")[1]; // Bearer token - get token value
   let status = 200;
-  const result = {};
+  let result = {};
 
-  try {
-    if (!token) {
-      status = 401;
+  if (!token) {
+    status = 401;
+    result.status = status;
+    result.error = "No token provided."
+  }
+
+  // Verify the token and check for expiration
+  jwt.verify(token, env.JWT_SECRET, (err, user) => {
+    if (err) {
+      status = 403;
       result.status = status;
-      result.error = "Not authorized. You need to log in.";
+      result.error = "Token is not valid. Forbidden access";
 
       res.status(status).send(result);
+    } else {
+      // Send the decoded token in the requests to any other route
+      req.decoded = user;
+
+      // Call next middleware / route functionality
+      next();
     }
-    const decryptedToken = await jwt.verify(token, env.JWT_SECRET);
-    req.decoded = decryptedToken;
 
-    next();
-  } catch(err) {
-    console.log(`ERROR: ${err}`);
-    // status = 400;
-    // result.status = status;
-    // result.error = `${err.message}`;
-
-    // res.status(status).send(result);
-  }
+  })
 }
 
 export default validateJWT;

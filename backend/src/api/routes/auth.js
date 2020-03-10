@@ -31,7 +31,7 @@ const authRoutes = app => {
         if (err) {
           status = 400;
           result.status = status;
-          result.error = "Something went wrong.";
+          result.error = "Provide credentials for existing user!";
 
           res.status(status).send(result);
         } else if (!user) {
@@ -88,7 +88,7 @@ const authRoutes = app => {
     }
   })
 
-  // Logout - delete a specific refresh token from the refresh tokens array saved in memory
+  // Logout - delete a specific refresh token from the database
   route.delete("/logout", (req, res) => {
     const refreshToken = req.cookies['notesapp-token'];
     status = 200;

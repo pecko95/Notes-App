@@ -15,7 +15,7 @@ export const validateJWT = async(req, res, next) => {
   }
 
   // Verify the token and check for expiration
-  jwt.verify(token, env.JWT_SECRET, (err, user) => {
+  jwt.verify(token, env.JWT_ACCESS_SECRET, (err, user) => {
     if (err) {
       status = 403;
       result.status = status;

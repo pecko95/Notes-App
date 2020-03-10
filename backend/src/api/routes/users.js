@@ -21,7 +21,7 @@ const userRoutes = app => {
     result = {};
 
     // Check if payload exists and the users role
-    if (payload && payload.user.role === "Admin") {
+    if (payload && payload.role === "Admin") {
       User.find({}).then(users => {
         res.json(users.map(user => user.toJSON()));
       })
@@ -157,7 +157,7 @@ const userRoutes = app => {
       // Allow user details to be updated if:
       // 1. Current user is Admin - can update every user details
       // 2. Current logged in user tries to update his own details
-      if (payload && payload.user.role === "Admin" || payload && payload.user.id === id) {
+      if (payload && payload.role === "Admin" || payload && payload.id === id) {
         // Check if user's ID is passed
         if (!id) {
           status = 401;
@@ -213,7 +213,7 @@ const userRoutes = app => {
     result = {};
 
     // Admin can delete all user accounts. Other roles can delete only their own account
-    if (payload && payload.user.role === "Admin" || payload && payload.user.id === id) {
+    if (payload && payload.role === "Admin" || payload && payload.id === id) {
       if (!id) {
         status = 400;
         result.status = status;

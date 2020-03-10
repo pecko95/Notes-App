@@ -3,14 +3,14 @@ import { Router } from "express";
 // Routes
 import userRoutes from "./routes/users";
 import signupRoute from "./routes/signup";
-import loginRoute from "./routes/login";
 import notesRoutes from "./routes/notes";
+import authRoutes from "./routes/auth";
 
 const routes = () => {
   const app = Router();
   userRoutes(app);
   signupRoute(app);
-  loginRoute(app);
+  authRoutes(app);
   notesRoutes(app);
 
   return app;

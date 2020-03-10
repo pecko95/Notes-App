@@ -14,7 +14,7 @@ const NotesRoute = app  => {
   route.get("/", validateJWT, (req, res) => {
     // Get ALL notes regardless of users
     const payload = req.decoded;
-    if (payload && payload.user.role === "Admin") {
+    if (payload && payload.role === "Admin") {
       Note.find({})
         .then(notes => {
           if (notes.length > 0) {
@@ -167,7 +167,7 @@ const NotesRoute = app  => {
 
       res.status(status).send(result);
     } else {
-      User.findOne({ _id: payload.user.id }, (err, user) => {
+      User.findOne({ _id: payload.id }, (err, user) => {
         if (err) {
           status = 400;
           result.status = status;
@@ -182,7 +182,7 @@ const NotesRoute = app  => {
           res.status(status).send(result);
         } else {
           // Check if user is admin or if the note belongs to the logged in user
-          if (payload && payload.user.role === "Admin" || payload && payload.user.id === user.id) {
+          if (payload && payload.role === "Admin" || payload && payload.id === user.id) {
             // Find and update a specific note
             Note.findOneAndUpdate({ id }, {
               $set: {
@@ -229,7 +229,7 @@ const NotesRoute = app  => {
     const payload = req.decoded;
 
     if (id) {
-      User.findOne({ _id: payload.user.id }, (err, user) => {
+      User.findOne({ _id: payload.id }, (err, user) => {
         if (err) {
           status = 400;
           result.status = status;
@@ -244,7 +244,7 @@ const NotesRoute = app  => {
           res.status(status).send(result);
         } else {
           // If the user exists, find the note belonging to that user
-          if (payload && payload.user.role === "Admin" || payload && payload.user.id === user.id) {
+          if (payload && payload.role === "Admin" || payload && payload.id === user.id) {
             Note.findOneAndRemove({ id }, (err, note) => {
               if (err) {
                 status = 400;
@@ -285,7 +285,7 @@ const NotesRoute = app  => {
     status = 200;
     result = {};
 
-    if (payload && payload.user.role === "Admin") {
+    if (payload && payload.role === "Admin") {
       try {
         // Check if there are any notes
         Note.find({}, async(err, notes) => {

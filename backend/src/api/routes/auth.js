@@ -7,9 +7,6 @@ import RefreshToken from "../../models/refreshTokens";
 
 const route = Router();
 
-// Refresh tokens saved in memory - will be lost on server shutdown or restart
-// let refreshTokens = [];
-
 const authRoutes = app => {
   app.use("/auth", route);
   let result = {};
@@ -56,7 +53,6 @@ const authRoutes = app => {
           // User exists and logs in successfully
           const accessToken  = await generateAccessToken(userDetails);
           const refreshToken = await generateRefreshToken(userDetails);
-          // refreshTokens.push(refreshToken);
 
           // Save the created token in data base
           RefreshToken.create({ refreshToken: refreshToken }, (err, token) => {
@@ -70,16 +66,13 @@ const authRoutes = app => {
               result.message = "Refresh token saved to database!";
             }
           })
-
-          // console.log('REFRESH TOKENS', refreshTokens);
           
           // Save the refresh token as an HTTP ONLY cookie
-          res.cookie('test-token', refreshToken, {
-            expires: new Date(Date.now() + (1000 * 60 * 60 * 24 * 5)), // 5 days
+          res.cookie('notesapp-token', refreshToken, {
+            expires: new Date(Date.now() + (1000 * 60 * 60 * 24 * 7)), // 7 days
             httpOnly: true,
             secure: false
           })
-
 
           status = 200;
           result.status = status;
@@ -97,17 +90,12 @@ const authRoutes = app => {
 
   // Logout - delete a specific refresh token from the refresh tokens array saved in memory
   route.delete("/logout", (req, res) => {
-    const refreshTokenCookie = req.cookies['test-token'];
+    const refreshToken = req.cookies['notesapp-token'];
     status = 200;
     result = {};
 
-    console.log('refersh tokens', refreshTokenCookie);
-
-    // Remove the refresh token from memory
-    // refreshTokens = refreshTokens.filter(token => token !== refreshTokenCookie);
-
     // Remove the refresh token from DATABASE instead of memory
-    RefreshToken.findOneAndRemove({ refreshToken: refreshTokenCookie }, (err, deletedToken) => {
+    RefreshToken.findOneAndRemove({ refreshToken }, (err, deletedToken) => {
       if (err) {
         status = 500;
         result.status = status;
@@ -120,7 +108,7 @@ const authRoutes = app => {
     })
 
     // Destroy the cookie
-    res.cookie('test-token', '', {  
+    res.cookie('notesapp-token', '', {  
       expires: new Date(0),
       domain: 'localhost',
       path: '/'
@@ -137,7 +125,7 @@ const authRoutes = app => {
   route.post("/token", (req, res) => {
     const authorization = req.headers['authorization'];
     const token = authorization && authorization.split(" ")[1];
-    const refreshTokenCookie = req.cookies['test-token'];
+    const refreshToken = req.cookies['notesapp-token'];
     status = 200;
     result = {};
 
@@ -156,14 +144,14 @@ const authRoutes = app => {
       If refresh token exists in database, proceed to verify it and check if it has expired
     */
 
-    RefreshToken.findOne({ refreshToken: refreshTokenCookie }, (err, token) => {
+    RefreshToken.findOne({ refreshToken }, (err, token) => {
       if (err) {
         status = 500;
         result.status = status;
         result.error = "Something went wrong!";
 
         return res.status(status).send(result);
-      } else if (!token || !refreshTokenCookie) {
+      } else if (!token || !refreshToken) {
         // If the token does not exists
         status = 403;
         result.status = status;
@@ -172,10 +160,10 @@ const authRoutes = app => {
         return res.status(status).send(result);
       } else {
         // If access token is expired but timed out, and there is refresh token, issue new access token
-        jwt.verify(refreshTokenCookie, env.JWT_REFRESH_SECRET, async(err, user) => {
+        jwt.verify(refreshToken, env.JWT_REFRESH_SECRET, async(err, user) => {
           if (err) {
             // Remove the refresh token from database if refresh token is expired
-            RefreshToken.findOneAndRemove({ refreshToken: refreshTokenCookie });
+            RefreshToken.findOneAndRemove({ refreshToken });
 
             status = 403;
             result.status = status;

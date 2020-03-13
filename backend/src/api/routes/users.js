@@ -3,6 +3,7 @@ import e, { Router } from "express";
 import User from "../../models/user";
 import Note from "../../models/note";
 import validateJWT from "../../utils/jwtHandling";
+import bcrypt from "bcrypt";
 
 // Initialize the router
 const route = Router();
@@ -249,6 +250,80 @@ const userRoutes = app => {
     }
     
   })
+
+  // Change password of a specific user
+  route.put("/:id/changepassword", validateJWT, (req, res, next) => {
+    const userID  = req.params.id;
+    const payload = req.decoded;
+    
+    // New password and repeated new password
+    const newPassword = req.body.newPassword;
+    const confirmPassword = req.body.confirmPassword;
+
+    // Allow only logged in user to change his own password
+    if (payload.id === userID) {
+      // Check if new password and confirmation passwords match
+      if (newPassword !== confirmPassword) {
+        status = 400;
+        result.status = status;
+        result.error = "Passwords do not match.";
+        
+        return result.status(status).send(result);
+      }
+
+      // Check if ID parameter is passed
+      if (!userID) {
+        status = 400;
+        result.status = status;
+        result.error = "Please provide existing user ID.";
+
+        res.status(status).send(result);
+      } else {
+        // Encrypt the new password
+        bcrypt.hash(newPassword, 10, (err, hashedPassword) => {
+          if (err) {
+            status = 500;
+            result.status = status;
+            result.error = "Something went wrong.";
+
+            res.status(status).send(result);
+          } else {
+            // Check if user exists in database and update its password
+            User.findOneAndUpdate({ _id: userID }, {
+              $set: {
+                password: hashedPassword
+              }
+            }, (err, user) => {
+
+              if (err) {
+                status = 500;
+                result.status = status;
+                result.error = err;
+
+                res.status(status).send(result);
+              } else if (!user) {
+                status = 400;
+                result.status = status;
+                result.error = "Provide matching credentials for the user.";
+
+                res.status(status).send(result);
+              } else {
+                status = 204;
+                result.status = status;
+                result.message = "Successfully updated password!";
+
+                res.status(status).send(result);
+              }
+
+            })
+          }
+        })
+      }
+    }
+
+  })
+
+  // Reset password of a specific user - send newly generated password to email
 }
 
 export default userRoutes;

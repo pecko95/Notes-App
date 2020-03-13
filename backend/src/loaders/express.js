@@ -22,6 +22,13 @@ const expressApp = async({ app }) => {
     credentials: true
   }));
 
+  // Set global content type configuration
+  app.use((req, res, next) => {
+    res.header("Content-Type", "application/json");
+
+    next();
+  })
+
   app.use(cookieParser());
 
   // API routes

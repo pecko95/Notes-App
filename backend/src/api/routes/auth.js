@@ -37,7 +37,7 @@ const authRoutes = app => {
         } else if (!user) {
           status = 404;
           result.status = status;
-          result.error = "User does not exist.";
+          result.error = "User does not exist and/or password does not match!";
           
           res.status(status).send(result);
         } else {

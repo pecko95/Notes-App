@@ -1,8 +1,13 @@
 import e, { Router } from "express";
+import crypto from "crypto";
+import env from "../../config/index";
 
 import User from "../../models/user";
 import Note from "../../models/note";
 import validateJWT from "../../utils/jwtHandling";
+import bcrypt from "bcrypt";
+import { transporter } from "../../utils/sendMail";
+import RefreshToken from "../../models/refreshTokens";
 
 // Initialize the router
 const route = Router();
@@ -248,6 +253,180 @@ const userRoutes = app => {
       res.status(status).send(result);
     }
     
+  })
+
+  // Change password of a specific user
+  route.put("/:id/changepassword", validateJWT, (req, res, next) => {
+    const userID  = req.params.id;
+    const payload = req.decoded;
+    
+    // New password and repeated new password
+    const newPassword = req.body.newPassword;
+    const confirmPassword = req.body.confirmPassword;
+
+    // Allow only logged in user to change his own password
+    if (payload.id === userID) {
+      // Check if new password and confirmation passwords match
+      if (newPassword !== confirmPassword) {
+        status = 400;
+        result.status = status;
+        result.error = "Passwords do not match.";
+        
+        return result.status(status).send(result);
+      }
+
+      // Check if ID parameter is passed
+      if (!userID) {
+        status = 400;
+        result.status = status;
+        result.error = "Please provide existing user ID.";
+
+        res.status(status).send(result);
+      } else {
+        // Encrypt the new password
+        bcrypt.hash(newPassword, 10, (err, hashedPassword) => {
+          if (err) {
+            status = 500;
+            result.status = status;
+            result.error = err;
+
+            res.status(status).send(result);
+          } else {
+            // Check if user exists in database and update its password
+            User.findOneAndUpdate({ _id: userID }, {
+              $set: {
+                password: hashedPassword
+              }
+            }, (err, user) => {
+
+              if (err) {
+                status = 500;
+                result.status = status;
+                result.error = err;
+
+                res.status(status).send(result);
+              } else if (!user) {
+                status = 400;
+                result.status = status;
+                result.error = "Provide matching credentials for the user.";
+
+                res.status(status).send(result);
+              } else {
+                status = 204;
+                result.status = status;
+                result.message = "Successfully updated password!";
+
+                res.status(status).send(result);
+              }
+
+            })
+          }
+        })
+      }
+    }
+
+  })
+
+  // Allow currently logged-in user to reset his/her own password
+  route.post("/resetpassword", validateJWT, (req, res, next) => {
+    const payload = req.decoded;
+    const { emailRecipient } = req.body;
+
+    // Make sure email is passed into the body upon request
+    if (emailRecipient) {
+      // Generate a new temporary password
+      const tempPassword = crypto.randomBytes(48).toString('hex').slice(0, 8);
+
+      // Encrypt the password before saving it to the database
+      bcrypt.hash(tempPassword, 10, (err, hashedPassword) => {
+        if (err) {
+          status = 500;
+          result.status = status;
+          result.error = err;
+
+          res.status(status).send(result);
+        } else {
+          // Find the user in the database and update its password
+          User.findOneAndUpdate({ _id: payload.id }, {
+            $set: {
+              password: hashedPassword
+            }
+          }, (err, user) => {
+            if (err) {
+              status = 500;
+              result.status = status;
+              result.error = err;
+
+              res.status(status).send(result);
+            } else if (!user) {
+              status = 404;
+              result.status = status;
+              result.error = "User does not exist!";
+
+              res.status(status).send(result);
+            } else {
+              status = 200;
+              result.status  = status;
+              result.success = "Password has been reset successfully!"; 
+              res.status(status).send(result);
+
+              // Invalidate the user
+              /*
+                TODO: Use a function for logging out instead for code re-usability.
+              */
+             const refreshToken = req.cookies['notesapp-token'];
+             status = 200;
+             result = {};
+         
+             // Remove the refresh token from DATABASE instead of memory
+             RefreshToken.findOneAndRemove({ refreshToken }, (err, deletedToken) => {
+               if (err) {
+                 status = 500;
+                 result.status = status;
+                 result.error = "Something went wrong!";
+               } else {
+                 status = 204;
+                 result.status = status;
+                 result.message = "Successfully deleted refresh token.";
+               }
+             });
+
+              // Set the mail options
+              const mailOptions = {
+                from: env.MAIL_SENDER,
+                to: emailRecipient,
+                subject: "Your password has been reset!",
+                html: `
+                <h1>Password has been successfully reset!</h1>
+                
+                <p>Here is your new password: <strong>${tempPassword}</strong></p> 
+                
+                <p>Be sure to change it after you login next time into your account!</p>
+                `
+                // html: fs.readFileSync('../../emails/testemail.html', { encoding: 'utf-8' });
+              }
+
+              // Send the email with the new password
+              transporter.sendMail(mailOptions, (err, info) => {
+                if (err) {
+                  console.log(`Sending email error: ${err}`)
+                } else {
+                  console.log(`Email has been sent!`);
+                }
+              })
+
+            }
+          })
+        }
+      })
+    } else {
+      status = 400;
+      result.status = status;
+      result.error = "Please provide valid email address";
+
+      res.status(status).send(result);
+    }
+
   })
 }
 

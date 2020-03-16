@@ -375,12 +375,13 @@ const userRoutes = app => {
                 to: emailRecipient,
                 subject: "Your password has been reset!",
                 html: `
-                  <h1>Password has been successfully reset!</h1>
-
-                  <p>Here is your new password: <strong>${tempPassword}</strong></p> 
-                  
-                  <p>Be sure to change it after you login next time into your account!</p>
+                <h1>Password has been successfully reset!</h1>
+                
+                <p>Here is your new password: <strong>${tempPassword}</strong></p> 
+                
+                <p>Be sure to change it after you login next time into your account!</p>
                 `
+                // html: fs.readFileSync('../../emails/testemail.html', { encoding: 'utf-8' });
               }
 
               // Send the email with the new password

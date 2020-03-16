@@ -7,6 +7,7 @@ import Note from "../../models/note";
 import validateJWT from "../../utils/jwtHandling";
 import bcrypt from "bcrypt";
 import { transporter } from "../../utils/sendMail";
+import RefreshToken from "../../models/refreshTokens";
 
 // Initialize the router
 const route = Router();
@@ -368,6 +369,27 @@ const userRoutes = app => {
               result.status  = status;
               result.success = "Password has been reset successfully!"; 
               res.status(status).send(result);
+
+              // Invalidate the user
+              /*
+                TODO: Use a function for logging out instead for code re-usability.
+              */
+             const refreshToken = req.cookies['notesapp-token'];
+             status = 200;
+             result = {};
+         
+             // Remove the refresh token from DATABASE instead of memory
+             RefreshToken.findOneAndRemove({ refreshToken }, (err, deletedToken) => {
+               if (err) {
+                 status = 500;
+                 result.status = status;
+                 result.error = "Something went wrong!";
+               } else {
+                 status = 204;
+                 result.status = status;
+                 result.message = "Successfully deleted refresh token.";
+               }
+             });
 
               // Set the mail options
               const mailOptions = {

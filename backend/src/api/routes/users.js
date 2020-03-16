@@ -1,9 +1,12 @@
 import e, { Router } from "express";
+import crypto from "crypto";
+import env from "../../config/index";
 
 import User from "../../models/user";
 import Note from "../../models/note";
 import validateJWT from "../../utils/jwtHandling";
 import bcrypt from "bcrypt";
+import { transporter } from "../../utils/sendMail";
 
 // Initialize the router
 const route = Router();
@@ -284,7 +287,7 @@ const userRoutes = app => {
           if (err) {
             status = 500;
             result.status = status;
-            result.error = "Something went wrong.";
+            result.error = err;
 
             res.status(status).send(result);
           } else {
@@ -323,7 +326,85 @@ const userRoutes = app => {
 
   })
 
-  // Reset password of a specific user - send newly generated password to email
+  // Allow currently logged-in user to reset his/her own password
+  route.post("/resetpassword", validateJWT, (req, res, next) => {
+    const payload = req.decoded;
+    const { emailRecipient } = req.body;
+
+    // Make sure email is passed into the body upon request
+    if (emailRecipient) {
+      // Generate a new temporary password
+      const tempPassword = crypto.randomBytes(48).toString('hex').slice(0, 8);
+
+      // Encrypt the password before saving it to the database
+      bcrypt.hash(tempPassword, 10, (err, hashedPassword) => {
+        if (err) {
+          status = 500;
+          result.status = status;
+          result.error = err;
+
+          res.status(status).send(result);
+        } else {
+          // Find the user in the database and update its password
+          User.findOneAndUpdate({ _id: payload.id }, {
+            $set: {
+              password: hashedPassword
+            }
+          }, (err, user) => {
+            if (err) {
+              status = 500;
+              result.status = status;
+              result.error = err;
+
+              res.status(status).send(result);
+            } else if (!user) {
+              status = 404;
+              result.status = status;
+              result.error = "User does not exist!";
+
+              res.status(status).send(result);
+            } else {
+              status = 200;
+              result.status  = status;
+              result.success = "Password has been reset successfully!"; 
+              res.status(status).send(result);
+
+              // Set the mail options
+              const mailOptions = {
+                from: env.MAIL_SENDER,
+                to: emailRecipient,
+                subject: "Your password has been reset!",
+                html: `
+                  <h1>Password has been successfully reset!</h1>
+
+                  <p>Here is your new password: <strong>${tempPassword}</strong></p> 
+                  
+                  <p>Be sure to change it after you login next time into your account!</p>
+                `
+              }
+
+              // Send the email with the new password
+              transporter.sendMail(mailOptions, (err, info) => {
+                if (err) {
+                  console.log(`Sending email error: ${err}`)
+                } else {
+                  console.log(`Email has been sent!`);
+                }
+              })
+
+            }
+          })
+        }
+      })
+    } else {
+      status = 400;
+      result.status = status;
+      result.error = "Please provide valid email address";
+
+      res.status(status).send(result);
+    }
+
+  })
 }
 
 export default userRoutes;

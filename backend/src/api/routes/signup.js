@@ -1,5 +1,7 @@
 import { Router } from "express";
-import User from "../../models/user";
+import { Container } from "typedi"
+import AccountService from "../../services/AccountService";
+import handleResponse from "../../utils/handleResponse";
 
 const route = Router();
 
@@ -7,43 +9,47 @@ const signupRoute = app => {
   app.use("/signup", route);
 
   // Create new user
-  route.post("/", (req, res, next) => {
-    // Get required field values
+  route.post("/", async(req, res, next) => {
+    // Destructure payload
     const { username, first_name, last_name, password, role } = req.body;
+    let result;
 
+    // Validate input
     if (!username || !first_name || !last_name || !password || !role) {
-      res.status(400).json({
-        error: "Please enter all required fields!"
-      })
-    } else {
-      // Provided data for the user
-      const userData = {
-        username,
-        first_name,
-        last_name,
-        password,
-        role
-      };
+      status = 400;
+      result.status = status;
+      result.error = "Please enter all required fields!";
 
-      // Create a new User document with provided data
-      User.create(userData, (err, user) => {
-        if (err) {
-          // Return  custom error if user already exists
-          if (err.code === 11000) {
-            res.status(400).json({
-              error: "User already exists!"
-            });
-          } else {
-            return next(err);
-          }
-        } else {
-          res.status(201).json({
-            "success": "User created successfully!"
-          })
-        }
-      });
-      
+      return res.status(status).send(result);
     }
+
+    const userData = {
+      username,
+      first_name,
+      last_name,
+      password,
+      role
+    };
+
+    try {
+      const accountService = Container.get(AccountService);
+      const newUser = await accountService.Signup(userData);
+
+      result = await handleResponse(201, "", "Successfully created new user!", newUser);
+    } catch(err) {
+      let error = "";
+
+      // Check if error is related to existing user in the database
+      if (err.code === 11000) {
+        error = "User already exists!";
+      } else {
+        error = err;
+      }
+      
+      result = await handleResponse(500, error);
+    }
+    
+    return res.status(result.status).send(result);
   })
 }
 

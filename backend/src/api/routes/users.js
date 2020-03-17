@@ -1,13 +1,9 @@
-import e, { Router } from "express";
-import crypto from "crypto";
-import env from "../../config/index";
+import { Router } from "express";
 
 import User from "../../models/user";
 import Note from "../../models/note";
 import validateJWT from "../../utils/jwtHandling";
 import bcrypt from "bcrypt";
-import { transporter, sendMail } from "../../utils/sendMail";
-import RefreshToken from "../../models/refreshTokens";
 
 // Initialize the router
 const route = Router();

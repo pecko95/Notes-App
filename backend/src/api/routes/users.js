@@ -6,7 +6,7 @@ import User from "../../models/user";
 import Note from "../../models/note";
 import validateJWT from "../../utils/jwtHandling";
 import bcrypt from "bcrypt";
-import { transporter } from "../../utils/sendMail";
+import { transporter, sendMail } from "../../utils/sendMail";
 import RefreshToken from "../../models/refreshTokens";
 
 // Initialize the router
@@ -323,108 +323,6 @@ const userRoutes = app => {
           }
         })
       }
-    }
-
-  })
-
-  // Allow currently logged-in user to reset his/her own password
-  route.post("/resetpassword", validateJWT, (req, res, next) => {
-    const payload = req.decoded;
-    const { emailRecipient } = req.body;
-
-    // Make sure email is passed into the body upon request
-    if (emailRecipient) {
-      // Generate a new temporary password
-      const tempPassword = crypto.randomBytes(48).toString('hex').slice(0, 8);
-
-      // Encrypt the password before saving it to the database
-      bcrypt.hash(tempPassword, 10, (err, hashedPassword) => {
-        if (err) {
-          status = 500;
-          result.status = status;
-          result.error = err;
-
-          res.status(status).send(result);
-        } else {
-          // Find the user in the database and update its password
-          User.findOneAndUpdate({ _id: payload.id }, {
-            $set: {
-              password: hashedPassword
-            }
-          }, (err, user) => {
-            if (err) {
-              status = 500;
-              result.status = status;
-              result.error = err;
-
-              res.status(status).send(result);
-            } else if (!user) {
-              status = 404;
-              result.status = status;
-              result.error = "User does not exist!";
-
-              res.status(status).send(result);
-            } else {
-              status = 200;
-              result.status  = status;
-              result.success = "Password has been reset successfully!"; 
-              res.status(status).send(result);
-
-              // Invalidate the user
-              /*
-                TODO: Use a function for logging out instead for code re-usability.
-              */
-             const refreshToken = req.cookies['notesapp-token'];
-             status = 200;
-             result = {};
-         
-             // Remove the refresh token from DATABASE instead of memory
-             RefreshToken.findOneAndRemove({ refreshToken }, (err, deletedToken) => {
-               if (err) {
-                 status = 500;
-                 result.status = status;
-                 result.error = "Something went wrong!";
-               } else {
-                 status = 204;
-                 result.status = status;
-                 result.message = "Successfully deleted refresh token.";
-               }
-             });
-
-              // Set the mail options
-              const mailOptions = {
-                from: env.MAIL_SENDER,
-                to: emailRecipient,
-                subject: "Your password has been reset!",
-                html: `
-                <h1>Password has been successfully reset!</h1>
-                
-                <p>Here is your new password: <strong>${tempPassword}</strong></p> 
-                
-                <p>Be sure to change it after you login next time into your account!</p>
-                `
-                // html: fs.readFileSync('../../emails/testemail.html', { encoding: 'utf-8' });
-              }
-
-              // Send the email with the new password
-              transporter.sendMail(mailOptions, (err, info) => {
-                if (err) {
-                  console.log(`Sending email error: ${err}`)
-                } else {
-                  console.log(`Email has been sent!`);
-                }
-              })
-
-            }
-          })
-        }
-      })
-    } else {
-      status = 400;
-      result.status = status;
-      result.error = "Please provide valid email address";
-
-      res.status(status).send(result);
     }
 
   })
